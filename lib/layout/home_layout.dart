@@ -21,7 +21,7 @@ class HomeLayoute extends StatefulWidget {
 Database? database;
 int currentIndex = 0;
 List<Widget> screen = [
-  Tasks(),
+  Taskss(),
   Done(),
   Archived(),
 ];
@@ -43,6 +43,7 @@ class _HomeLayouteState extends State<HomeLayoute> {
   @override
   void initState() {
     CreateDatabase();
+
     super.initState();
   }
 
@@ -55,7 +56,11 @@ class _HomeLayouteState extends State<HomeLayoute> {
           titles[currentIndex],
         ),
       ),
-      body: screen[currentIndex],
+      body: tasks.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : screen[currentIndex],
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.amberAccent,
         onPressed: () {
@@ -67,9 +72,14 @@ class _HomeLayouteState extends State<HomeLayoute> {
                 date: dateController.text,
               ).then((value) {
                 Navigator.pop(context);
-                isBottomSheetShone = false;
-                febIcon = Icons.edit;
-                setState(() {});
+
+                GetDataFromDatabase(database).then((newvalue) {
+                  setState(() {
+                    isBottomSheetShone = false;
+                    febIcon = Icons.edit;
+                    tasks = newvalue;
+                  });
+                });
               });
             }
           } else {
@@ -126,7 +136,7 @@ class _HomeLayouteState extends State<HomeLayoute> {
                           const SizedBox(height: 15.0),
                           TextFormField(
                             controller: dateController,
-                            decoration:const InputDecoration(
+                            decoration: const InputDecoration(
                               prefix: Icon(Icons.calendar_month),
                               border: OutlineInputBorder(),
                               hintText: 'Task Date',
@@ -204,5 +214,49 @@ class _HomeLayouteState extends State<HomeLayoute> {
         ],
       ),
     );
+  }
+
+  void CreateDatabase() async {
+    database = await openDatabase('todo.db', version: 1,
+        onCreate: (database, version) {
+      print("database create");
+      database
+          .execute(
+              'CREATE TABLE tasks(id INTEGER PRIMARY KEY,title TEXT,date TEXT,time TEXT,status TEXT)')
+          .then((value) {
+        print("table Created");
+      }).catchError((error) {
+        print('Error when create database ${error.toString()}');
+      });
+    }, onOpen: (database) {
+      GetDataFromDatabase(database).then((value) {
+        setState(() {
+          tasks = value;
+        });
+      });
+      print("database on Open");
+    });
+  }
+
+  Future InsertToDatabase({
+    required String title,
+    required String time,
+    required String date,
+  }) async {
+    return await database!.transaction((txn) async {
+      txn
+          .rawInsert(
+        'INSERT INTO tasks(title,date,time,status)VALUES("$title","$time","$date","new")',
+      )
+          .then((value) {
+        print("$value inserted Successfuly");
+      }).catchError((erorr) {
+        print("Error when Inserting New Record${erorr.toString()}");
+      });
+    });
+  }
+
+  Future<List<Map>> GetDataFromDatabase(database) async {
+    return await database!.rawQuery('SELECT * FROM tasks');
   }
 }
