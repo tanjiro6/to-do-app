@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../cuibt/cuibt.dart';
+
 //button
 Widget defaultButton({
   //par default et peut changer
@@ -23,6 +25,8 @@ Widget defaultButton({
       ),
     );
 //TextFormeFIeld
+var tasks = AppCubit.get(BuildContext).tasks;
+
 Widget defaultFormField({
   TextEditingController? controller,
   required TextInputType type,
@@ -51,6 +55,7 @@ Widget BuldTaskItem(int index) => Padding(
       child: Row(
         children: [
           CircleAvatar(
+            backgroundColor: Colors.amberAccent,
             radius: 40,
             child: Text(
               tasks[index]['date'],
@@ -70,7 +75,7 @@ Widget BuldTaskItem(int index) => Padding(
                 ),
               ),
               Text(
-                tasks[index]['date'],
+                tasks[index]['time'],
                 style: TextStyle(
                   color: Colors.grey,
                 ),
@@ -80,5 +85,3 @@ Widget BuldTaskItem(int index) => Padding(
         ],
       ),
     );
-
-List<dynamic> tasks = [];

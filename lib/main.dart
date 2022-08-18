@@ -1,9 +1,14 @@
+import 'package:application/modules/counterScrenn/counterScreen.dart';
+import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 
 import 'layout/Test.dart';
 import 'layout/home_layout.dart';
+import 'shared/bloc_observer.dart';
 
 void main() {
+  Bloc.observer = MyBlocObserver();
+
   runApp(const MyApp());
 }
 
