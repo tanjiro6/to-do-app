@@ -16,6 +16,10 @@ class AppCubit extends Cubit<AppState> {
   int currentIndex = 0;
   late Database database;
 
+  List<Map> newTasks = [];
+  List<Map> doneTasks = [];
+  List<Map> archivedTasks = [];
+
   bool isBottomSheetShone = false;
   IconData febIcon = Icons.edit;
 
@@ -36,9 +40,8 @@ class AppCubit extends Cubit<AppState> {
 
   List<dynamic> tasks = [];
 
-  void CreateDatabase() async {
-    database = await openDatabase('todo.db', version: 1,
-        onCreate: (database, version) {
+  void createDatabase() async {
+    openDatabase('todo.db', version: 1, onCreate: (database, version) {
       print("database create");
       database
           .execute(
@@ -49,8 +52,13 @@ class AppCubit extends Cubit<AppState> {
         print('Error when create database ${error.toString()}');
       });
     }, onOpen: (database) {
+      GetDataFromDatabase(database);
       print("database on Open");
+    }).then((value) {
+      database = value;
       emit(AppCreateDatabaseState());
+    }).catchError((error) {
+      print('error when opned database ${error.toString()}');
     });
   }
 
@@ -68,19 +76,31 @@ class AppCubit extends Cubit<AppState> {
         print("$value inserted Successfuly");
         emit(AppInsertDatabaseState());
 
-        GetDataFromDatabase(database).then((value) {
-          tasks = value;
-          print(tasks);
-          emit(AppGetDatabaseState());
-        });
+        GetDataFromDatabase(database);
       }).catchError((erorr) {
         print("Error when Inserting New Record${erorr.toString()}");
       });
     });
   }
 
-  Future<List<Map>> GetDataFromDatabase(database) async {
-    return await database.rawQuery('SELECT * FROM tasks');
+  void GetDataFromDatabase(database) async {
+    newTasks = [];
+    doneTasks = [];
+    archivedTasks = [];
+    emit(AppGetDatabaseLoadingState());
+
+    database.rawQuery('SELECT * FROM tasks').then((value) {
+      value.forEach((element) {
+        if (element['status'] == 'new')
+          newTasks.add(element);
+        else if (element['status'] == 'done')
+          doneTasks.add(element);
+        else
+          archivedTasks.add(element);
+      });
+
+      emit(AppGetDataFromDatabaseState());
+    });
   }
 
   void changeBottomSheetState({
@@ -90,5 +110,27 @@ class AppCubit extends Cubit<AppState> {
     isBottomSheetShone = isShow;
     febIcon = icon;
     emit(AppChangeBottomSheteBarState());
+  }
+
+  void updateData({
+    required String status,
+    required int id,
+  }) async {
+    database.rawUpdate(
+      'UPDATE tasks SET status = ? WHERE id = ?',
+      ['$status', id],
+    ).then((value) {
+      GetDataFromDatabase(database);
+      emit(AppUpdatetDatabaseLoadingState());
+    });
+  }
+
+  void deleteData({
+    required int id,
+  }) async {
+    database.rawDelete('DELETE FROM tasks WHERE id = ?', [id]).then((value) {
+      GetDataFromDatabase(database);
+      emit(AppDeleteDatabaseState());
+    });
   }
 }

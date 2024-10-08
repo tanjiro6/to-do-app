@@ -10,12 +10,12 @@ class HomeLayoute extends StatelessWidget {
   var timeController = TextEditingController();
   var dateController = TextEditingController();
 
-  var ScaffoldKey = GlobalKey<ScaffoldState>();
-  var FormKey = GlobalKey<FormState>();
+  var scaffoldKey = GlobalKey<ScaffoldState>();
+  var formKey = GlobalKey<FormState>();
 
   Widget build(BuildContext context) {
     return BlocProvider(
-        create: (BuildContext context) => AppCubit()..CreateDatabase(),
+        create: (BuildContext context) => AppCubit()..createDatabase(),
         child: BlocConsumer<AppCubit, AppState>(
           listener: (BuildContext context, AppState state) {
             if (state is AppInsertDatabaseState) {
@@ -26,43 +26,40 @@ class HomeLayoute extends StatelessWidget {
             AppCubit cubit = AppCubit.get(context);
 
             return Scaffold(
-              key: ScaffoldKey,
+              key: scaffoldKey,
               appBar: AppBar(
                 backgroundColor: Colors.amberAccent,
                 title: Text(
                   cubit.titles[cubit.currentIndex],
                 ),
               ),
-              body: cubit.tasks.isEmpty
+              body: state is AppGetDatabaseLoadingState
                   ? const Center(
                       child: CircularProgressIndicator(),
                     )
                   : cubit.screen[cubit.currentIndex],
               floatingActionButton: FloatingActionButton(
                   backgroundColor: Colors.amberAccent,
+                  child: Icon(
+                    color: Colors.white,
+                    cubit.febIcon,
+                  ),
                   onPressed: () {
                     if (cubit.isBottomSheetShone) {
-                      if (FormKey.currentState!.validate()) {
+                      if (formKey.currentState!.validate()) {
                         cubit.InsertToDatabase(
                           title: titleController.text,
                           time: timeController.text,
                           date: dateController.text,
-                        ).then((value) {
-                          cubit.GetDataFromDatabase(cubit.database)
-                              .then((newvalue) {
-                            cubit.isBottomSheetShone = false;
-                            cubit.febIcon = Icons.edit;
-                            cubit.tasks = newvalue;
-                          });
-                        });
+                        );
                       } else {
-                        ScaffoldKey.currentState
-                            ?.showBottomSheet(
+                        scaffoldKey.currentState!
+                            .showBottomSheet(
                               (context) => Container(
                                 padding: const EdgeInsets.all(20.0),
                                 color: Colors.grey[100],
                                 child: Form(
-                                  key: FormKey,
+                                  key: formKey,
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -152,12 +149,6 @@ class HomeLayoute extends StatelessWidget {
                         AppCubit.get(context).changeBottomSheetState(
                           isShow: true,
                           icon: Icons.add,
-                        );
-
-                        child:
-                        Icon(
-                          color: Colors.white,
-                          cubit.febIcon,
                         );
                       }
                     }

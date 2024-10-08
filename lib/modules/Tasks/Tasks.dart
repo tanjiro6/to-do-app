@@ -20,7 +20,10 @@ class Taskss extends StatelessWidget {
           child: ListView.separated(
             physics: const NeverScrollableScrollPhysics(),
             shrinkWrap: true,
-            itemBuilder: (context, index) => BuldTaskItem(index),
+            itemBuilder: (context, index) {
+              print("tasks staus${tasks[index]['status']}");
+              return buildTaskItem(tasks[index], context);
+            },
             separatorBuilder: (context, index) => Container(
               width: double.infinity,
               height: 1,
